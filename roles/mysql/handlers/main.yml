@@ -2,10 +2,10 @@
 
 - name: start mysql
   service: >
-    name=mysql state=started
+    name={{ mysql_service }} state=started
   become: yes
 
 - name: restart mysql
   service: >
-    name=mysql state=restarted
+    name={{ mysql_service }} state=restarted
   become: yes

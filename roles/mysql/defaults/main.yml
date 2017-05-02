@@ -1,22 +1,40 @@
-# packages
-mysql_packages:
-  - 'mysql-server-{{ mysql_version }}'
-  - 'mysql-server-core-{{ mysql_version }}'
-  - python-mysqldb
+mysql_dynamic_defaults:
+  centos-7.*:
+    mysql_yum_repository: https://dev.mysql.com/get/mysql{{ mysql_version|string|regex_replace('\.', '') }}-community-release-el7-9.noarch.rpm
+  centos:
+    mysql_config_include_directory: /etc/my.cnf.d
+    mysql_config_path: /etc/my.cnf
+    mysql_packages:
+      - mysql
+      - mysql-server
+      - MySQL-python
+    mysql_service: mysqld
+  linux:
+    mysql_config_include_directory: /etc/mysql/conf.d
+    mysql_config_path: /etc/mysql/my.cnf
+    mysql_packages:
+      - 'mysql-server-{{ mysql_version }}'
+      - 'mysql-server-core-{{ mysql_version }}'
+      - python-mysqldb
+    mysql_service: mysql
+
+mysql_base_directory: /usr
+mysql_data_directory: /var/lib/mysql
+mysql_log_directory: /var/log/mysql
+mysql_messages_directory: /usr/share/mysql
+
 # miscellaneous configuration
 mysql_auto_rehash: yes
-mysql_base_directory: /usr
 mysql_bin_log_enabled: no
-mysql_bin_log_file: /var/log/mysql/mysql-bin.log
+mysql_bin_log_file: '{{ mysql_log_directory }}/mysql-bin.log'
 mysql_bin_log_max_size: 100M
 mysql_config_file: 'daemon{{ mysql_version }}.my.cnf.j2'
-mysql_data_directory: /var/lib/mysql
 mysql_dump_packet_max_size: 16M
 mysql_dump_quick: yes
 mysql_dump_quote_names: yes
-mysql_error_log_file: /var/log/mysql/error.log
+mysql_error_log_file: '{{ mysql_log_directory }}/error.log'
 mysql_general_log_enabled: no
-mysql_general_log_file: /var/log/mysql/mysql.log
+mysql_general_log_file: '{{ mysql_log_directory }}/mysql.log'
 mysql_innodb_buffer_pool_size: 128M
 mysql_innodb_flush_log_at_trx_commit: 1
 mysql_isamchk_key_buffer_size: 16M
@@ -25,7 +43,6 @@ mysql_key_buffer_size: 16M
 mysql_logs_retention_days: 10
 mysql_max_connections: 151
 mysql_max_heap_table_size: 16M
-mysql_messages_directory: /usr/share/mysql
 mysql_open_files_limit: 1024
 mysql_packet_max_size: 16M
 mysql_pid_file: /var/run/mysqld/mysqld.pid
@@ -35,7 +52,7 @@ mysql_query_cache_type: off
 mysql_query_log_use_indexes: yes
 mysql_server_id: 0
 mysql_slow_query_log_enabled: no
-mysql_slow_query_log_file: /var/log/mysql/mysql-slow.log
+mysql_slow_query_log_file: '{{ mysql_log_directory }}/mysql-slow.log'
 mysql_slow_query_time: 2
 mysql_socket_file: /var/run/mysqld/mysqld.sock
 mysql_table_definition_cache: 400

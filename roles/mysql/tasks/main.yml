@@ -1,29 +1,38 @@
 # Install and configure MySQL
 ---
 
-- assert:
-    that:
-      - mysql_query_cache_type in mysql_query_cache_types
+- block:
+    - dynamic_defaults:
+        hostvars: '{{ hostvars[inventory_hostname] }}'
+        defaults: '{{ mysql_dynamic_defaults }}'
+        must_match: yes
+
+    - assert:
+        that:
+          - mysql_query_cache_type in mysql_query_cache_types
   tags: [mysql, always]
 
-- name: Install MySQL packages
-  package: >
-    name={{ item }} state=present
-  become: yes
-  tags: [mysql, packages]
-  with_items: '{{ mysql_packages }}'
+- block:
+    - include: setup-repository-{{ ansible_pkg_mgr }}.yml
 
-- name: Start MySQL service
-  service: >
-    name=mysql state=started enabled=yes
-  become: yes
-  tags: [mysql, services]
+    - name: Install MySQL packages
+      package: >
+        name={{ item }} state=present
+      become: yes
+      with_items: '{{ mysql_packages }}'
+  tags: [mysql, packages]
 
 - block:
-    - name: Configure MySQL
-      template: >
-        src={{ mysql_config_file }} dest=/etc/mysql/my.cnf owner=root group=root mode=600
-      notify: restart mysql
+    - name: Create MySQL directories
+      file: >
+        name={{ item }} owner=mysql group=mysql mode=755 state=directory
+      with_items:
+        - '{{ mysql_log_directory }}'
+
+    # - name: Configure MySQL
+    #   template: >
+    #     src={{ mysql_config_file }} dest={{ mysql_config_path }} owner=root group=root mode=600
+    #   notify: restart mysql
 
     - name: Configure socket for Debian
       replace: >
@@ -44,6 +53,17 @@
     - name: Copy user my.cnf file with root credentials
       template: >
         src=root.my.cnf.j2 dest=/root/.my.cnf owner=root group=root mode=0600
+  become: yes
+  tags: [mysql, config]
+
+- name: Start MySQL service
+  service: >
+    name={{ mysql_service }} state=started enabled=yes
+  become: yes
+  tags: [mysql, services]
+
+- block:
+    - meta: flush_handlers
 
     - name: Configure MySQL root password
       mysql_user: >
